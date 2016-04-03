@@ -11,7 +11,7 @@ def index(request):
     }
     return render(request, 'application.html', context)
 
-
+# To be replaced by a new plan and prev plan function
 def plan(request):
     requestedplan = request.POST.get("plan","")
     print(request)
@@ -74,3 +74,15 @@ def tryint(val):
         return True
     except ValueError:
         return False
+
+def makeNewDegree(request):
+
+def loadPrevDegree(request):
+
+def expandDegree(request):
+
+def saveSemChanges(request):
+
+def saveSemOrder(request):
+
+def login(request):
