@@ -93,6 +93,11 @@ def makeNewDegree(request):
     if requestedplan == '':
         requestedplan = 'NONE'
     useplan = DegreePlanTemplate.objects.get(Major=requestedplan)
+    newUserPlan = UserDegreePlan.objects.create()
+    newUserPlan.Major = useplan.Major
+    newUserPlan.CreditsRemaining = useplan.Credits
+    newUserPlan.save()
+    return expandDegree(newUserPlan)
 
 
 def loadPrevDegree(request):
