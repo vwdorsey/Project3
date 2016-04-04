@@ -26,14 +26,14 @@ class SemesterTemplate(models.Model):
 class DegreePlanTemplate(models.Model):
     Major = models.CharField(max_length=30, primary_key=True)
     Credits = models.IntegerField()
-    Semester1 = models.ForeignKey(SemesterTemplate, related_name="sem1", null=True)
-    Semester2 = models.ForeignKey(SemesterTemplate, related_name="sem2", null=True)
-    Semester3 = models.ForeignKey(SemesterTemplate, related_name="sem3", null=True)
-    Semester4 = models.ForeignKey(SemesterTemplate, related_name="sem4", null=True)
-    Semester5 = models.ForeignKey(SemesterTemplate, related_name="sem5", null=True)
-    Semester6 = models.ForeignKey(SemesterTemplate, related_name="sem6", null=True)
-    Semester7 = models.ForeignKey(SemesterTemplate, related_name="sem7", null=True)
-    Semester8 = models.ForeignKey(SemesterTemplate, related_name="sem8", null=True)
+    Semester1 = models.TextField(default='NONE')
+    Semester2 = models.TextField(default='NONE')
+    Semester3 = models.TextField(default='NONE')
+    Semester4 = models.TextField(default='NONE')
+    Semester5 = models.TextField(default='NONE')
+    Semester6 = models.TextField(default='NONE')
+    Semester7 = models.TextField(default='NONE')
+    Semester8 = models.TextField(default='NONE')
 
 class UserDegreePlan(models.Model):
     ENTRY_TERM_CHOICES = (

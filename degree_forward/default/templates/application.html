@@ -13,20 +13,34 @@
     </div>
     <div class="container-fluid col-xs-8 col-xs-offset-2">
         <h3 style="text-align: center">Degree planning is tedious. Let us help you with it!</h3>
-        <div class="container col-xs-8 col-xs-offset-2">
-            <div class="container col-xs-9 col-xs-offset-2">
-                <form action="/plan/" method="POST">{% csrf_token %}
-                    Choose your plan:
-                    <select name="plan">
-                        {% for plan in plans %}
-                        <option value="{{ plan.Major }}">{{ plan.Major }}</option>
-                        {% endfor %}
-                    </select>
-                    <input type="submit" class="btn btn-default btn-primary" value="Let's Get Started">
+    </div>
+    {%  if error %}
+    <div class="container-fluid col-xs-8 col-xs-offset-2">
+        <h4 style="text-align: center; background: rgba(255, 0, 0, 0.5);">{{ error }}</h4>
+    </div>
+    {% endif %}
+    <div class="container col-xs-8 col-xs-offset-2">
+            <div class="container col-xs-4 col-xs-offset-1">
+                <h4 style="text-align: center">Register</h4>
+                <form method="post" action="/register/">
+                    {% csrf_token %}
+                    Desired Username: <input type="text" name="username">
+                    New Password: <input type="password" name="pass1">
+                    Retype Password: <input type="password" name="pass2">
+                    <input type="submit" value="Register Account">
+                </form>
+            </div>
+            <div class="container col-xs-4 col-xs-offset-2">
+                <h4 style="text-align: center">Login</h4>
+                <form method="post" action="/login/">
+                    {% csrf_token %}
+                    Username: <input type="text" name="username">
+                    Password: <input type="password" name="password">
+
+                    <input type="submit" value="Login" class="btn">
                 </form>
             </div>
         </div>
-    </div>
 
     <script>
         function onClick(location){

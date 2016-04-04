@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Landing</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" >
+    <script src="//code.jquery.com/jquery-1.12.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+</head>
+<body>
+    Welcome {{ uname }}!
+    <div class="container col-xs-8 col-xs-offset-2">
+        Create a new plan:
+        <div class="container col-xs-9 col-xs-offset-2">
+            <form action="/plan/" method="POST">
+                {% csrf_token %}
+                <select name="plan">
+                    {% for info in tempList %}
+                    <option value="{{ info }}">{{ info }}</option>
+                    {% endfor %}
+                </select>
+                <input type="submit" class="btn btn-default btn-primary" value="Let's Get Started">
+            </form>
+        </div>
+    </div>
+    <div class="container col-xs-8 col-xs-offset-2">
+    Restore a previous plan:
+        <div class="container col-xs-9 col-xs-offset-2">
+            <form action="/plan/" method="POST">
+                {% csrf_token %}
+                Restore a plan that you've worked on already:
+                <select name="plan">
+                    {% for plan in degList %}
+                    <option value="{{ plan }}">{{ plan }}</option>
+                    {% endfor %}
+                </select>
+                <input type="submit" class="btn btn-default btn-primary" value="Let's Get Started">
+            </form>
+        </div>
+    </div>
+</body>
+</html>
