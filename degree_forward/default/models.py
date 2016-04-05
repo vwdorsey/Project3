@@ -41,7 +41,7 @@ class UserDegreePlan(models.Model):
         ('S', 'Spring'),
     )
     LinkedUser = models.ForeignKey(User)
-    Major = models.CharField(max_length=30, primary_key=True)
+    Major = models.CharField(max_length=30)
     Entry = models.CharField(max_length=1, choices=ENTRY_TERM_CHOICES, default='F"')
     CreditsRemaining = models.IntegerField()
     Semesters = models.TextField(null=False)
@@ -52,6 +52,6 @@ class UserSemester(models.Model):
         ('S', 'Spring'),
         ('SS', 'Summer'),
     )
-    Number = models.IntegerField()
+    Number = models.IntegerField(null=True)
     Term = models.CharField(max_length=2, choices=TERM_CHOICES)
     Classes = models.TextField(null=True)

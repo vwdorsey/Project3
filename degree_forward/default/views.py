@@ -49,16 +49,16 @@ def landing(request):
     else:
         return render(request, 'application.html')
 
-def getUserDegreeList(id):
-    planListings = []
+def getUserDegreeList(uid):
+    planList = []
     try:
-        plans = UserDegreePlan.objects.get(LinkedUser=id);
+        plans = UserDegreePlan.objects.filter(LinkedUser=uid)
         for plan in plans:
-            planListings.append(plan.Major)
-        return planListings
+            planList.append(plan)
+        return planList
     except ObjectDoesNotExist as e:
-        planListings.append("No Degrees Created.")
-        return planListings
+        planList.append("No Degrees Created.");
+        return planList
 
 
 def getTemplateList():
@@ -90,31 +90,71 @@ def tryint(val):
 
 def makeNewDegree(request):
     requestedplan = request.POST.get("plan", "")
-    if requestedplan == '':
-        requestedplan = 'NONE'
+    if (requestedplan == '') or (requestedplan == 'No Degrees Available'):
+        error = 'You must select a degree.'
+        context = {error}
+        return render(request, 'landing.html', context)
+    entry = request.POST.get("entry", "")
+    if entry == '':
+        error = 'You must select an entry semester.'
+        context = {error}
+        return render(request, 'landing.html', context)
     useplan = DegreePlanTemplate.objects.get(Major=requestedplan)
-    newUserPlan = UserDegreePlan.objects.create()
-    newUserPlan.Major = useplan.Major
-    newUserPlan.CreditsRemaining = useplan.Credits
+    semesters = []
+
+    semesters.append(useplan.Semester1)
+    semesters.append(useplan.Semester2)
+    semesters.append(useplan.Semester3)
+    semesters.append(useplan.Semester4)
+    semesters.append(useplan.Semester5)
+    semesters.append(useplan.Semester6)
+    semesters.append(useplan.Semester7)
+    semesters.append(useplan.Semester8)
+
+    planEntry = ''
+    idString = ''
+    if entry == 'Fall':
+        planEntry = 'F'
+    else:
+        planEntry = 'S'
+
+    semEntry = planEntry
+    for i in range(0, 8):
+        newSem = UserSemester.objects.create()
+        newSem.Number = i
+        newSem.Term = semEntry
+        newSem.Classes = semesters[i]
+        newSem.save()
+        idString += str(newSem.pk) + ';'
+        if semEntry == 'S':
+            semEntry = 'F'
+        else:
+            semEntry = 'S'
+
+    newUserPlan = UserDegreePlan.objects.create(LinkedUser=request.user, Major=useplan.Major, Entry=planEntry,
+                                                CreditsRemaining=useplan.Credits, Semesters=idString)
     newUserPlan.save()
-    return expandDegree(newUserPlan)
+    return expandDegree(newUserPlan, request)
 
 
 def loadPrevDegree(request):
-    requestedplan = request.POST.get("planID", "")
-    if requestedplan == '':
-        requestedplan = 'NONE'
-    useplan = UserDegreePlan.objects.get(pk=requestedplan);
-    if useplan.LinkedUser == request.user.id:
-        expandDegree(useplan, request)
+    requestedplan = request.POST.get("plan", "")
+    if requestedplan == 'No Degrees Available':
+        error = 'You have no degrees available to select.'
+        context = {error}
+        return render(request, 'landing.html', context)
+    planNum = int(requestedplan)
+    useplan = UserDegreePlan.objects.get(pk=planNum)
+    if useplan.LinkedUser == request.user:
+        return expandDegree(useplan, request)
     else:
         error = "The degree you tried to load doesn't belong to you. If this is in error, please report to devs."
-        context = { error }
-        render(request, 'landing.html', context)
+        context = {error}
+        return render(request, 'landing.html', context)
 
 
 def expandDegree(useplan, request):
-    plans = DegreePlanTemplate.objects.all()
+    #plans = DegreePlanTemplate.objects.all()
     classes = ClassListing.objects.all()
     ClassString = ""
     ClassCategories = []
@@ -128,13 +168,18 @@ def expandDegree(useplan, request):
             ClassCategories.append(category)
         ClassString += c.code
         ClassString += ';'
-
+    ClassCategories.sort()
     categories = ""
     for c in ClassCategories:
         categories += c + ';'
 
-    semesters = [useplan.Semester1, useplan.Semester2, useplan.Semester3, useplan.Semester4, useplan.Semester5,
-                 useplan.Semester6, useplan.Semester7, useplan.Semester8]
+    semesters = []
+    semIdString = useplan.Semesters
+    semIds = semIdString.split(';')
+    for i in semIds:
+        if i != '':
+            semesters.append(UserSemester.objects.get(id=int(i)))
+
     classlist = []
     semCredits = []
 
@@ -143,7 +188,7 @@ def expandDegree(useplan, request):
         semesterlist = []
         scredits = 0
         for item in semlist:
-            if len(item) > 0:
+            if len(item) > 0 and item != 'NONE':
                 thisclass = ClassListing.objects.get(code=item)
                 scredits += thisclass.credits
                 semesterlist.append(thisclass)
@@ -153,10 +198,9 @@ def expandDegree(useplan, request):
     context = {
         'categories': categories,
         'classString': ClassString,
-        'allplans': plans,
         'allclasses': classes,
         'plan': useplan,
-        'credits': useplan.Credits,
+        'credits': useplan.CreditsRemaining,
         'classList': classlist,
         'semCredits': semCredits
     }

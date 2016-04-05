@@ -9,15 +9,24 @@
 </head>
 <body>
     Welcome {{ uname }}!
+    {% if error %}
+    <div class="container col-xs-8 col-xs-offset-2">
+        <h3>{{ error }}</h3>
+    </div>
+    {% endif %}
     <div class="container col-xs-8 col-xs-offset-2">
         Create a new plan:
         <div class="container col-xs-9 col-xs-offset-2">
-            <form action="/plan/" method="POST">
+            <form action="/newPlan/" method="POST">
                 {% csrf_token %}
                 <select name="plan">
                     {% for info in tempList %}
                     <option value="{{ info }}">{{ info }}</option>
                     {% endfor %}
+                </select>
+                <select name="entry">
+                    <option value="Fall">Fall</option>
+                    <option value="Spring">Spring</option>
                 </select>
                 <input type="submit" class="btn btn-default btn-primary" value="Let's Get Started">
             </form>
@@ -26,12 +35,12 @@
     <div class="container col-xs-8 col-xs-offset-2">
     Restore a previous plan:
         <div class="container col-xs-9 col-xs-offset-2">
-            <form action="/plan/" method="POST">
+            <form action="/existingPlan/" method="POST">
                 {% csrf_token %}
                 Restore a plan that you've worked on already:
                 <select name="plan">
                     {% for plan in degList %}
-                    <option value="{{ plan }}">{{ plan }}</option>
+                    <option value="{{ plan.id }}">{{ plan.Major }}</option>
                     {% endfor %}
                 </select>
                 <input type="submit" class="btn btn-default btn-primary" value="Let's Get Started">

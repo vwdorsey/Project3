@@ -35,14 +35,7 @@
         </div>
     </div>
     <div class="container-fluid col-xs-3 fill" style="background-color: lightsteelblue; padding-top: 30px; min-height: 100%">
-        <form action="/plan/" method="POST">{% csrf_token %}
-            <select name="plan">
-                {% for plan in allplans %}
-                <option value="{{ plan.Major }}">{{ plan.Major }}</option>
-                {% endfor %}
-            </select>
-            <input type="submit" value="Generate Plan">
-        </form>
+        <button onclick="window.location = '/landing/" class="btn">Return to Landing</button>
         <br>
         <div class="container-fluid" style="margin-bottom: 30px;">
             Add Class:
