@@ -12,6 +12,7 @@
     <div class="container-fluid col-xs-9" style="background-color: lightgrey; padding-top: 20px; padding-bottom: 20px; min-height: 100%">
         <div class="container-fluid" style="margin-bottom:20px">
             {{ plan }} - {{ credits }} credits
+            <input type="hidden" id="planID" value="{{ useplan.id }}">
         </div>
         <div class="container-fluid">
             {% for list in classList %}
@@ -200,6 +201,7 @@
 
         function addClass(prompt, dest) {
             if (prompt != null) {
+                /*
                 var cc = prompt.toUpperCase();
                 var info = document.getElementById(cc + '-info').value;
                 if (document.getElementById(cc) == null) {
@@ -241,6 +243,20 @@
                     alert("Course is already present");
                     return;
                 }
+                */
+                $.post( "/addClass/", { post: null, semester: dest, classcode: prompt, csrf-token:{% csrf_token %}} }, function(data){
+                    if(data.indexOf("FAIL-COREQ") > -1) {
+                        cc = data.substring(data.lastIndexOf('-')+1, data.length);
+                        alert("Unable to add "+prompt+". Coreq "+cc+" is not satisfied.");
+                    }
+                    else if(data.indexOf("FAIL-PREREQ") > -1) {
+                        cc = data.substring(data.lastIndexOf('-')+1, data.length);
+                        alert("Unable to add "+prompt+". Prereq "+cc+" is not satisfied.");
+                    }
+                    else {
+                        if(data.indexOf("WARN-CROB")) alert("WARN: Destination is over 21 credits.");
+                    }
+                });
             }
             else {
                 return;
@@ -310,13 +326,14 @@
                 alert("Please Select a Semester");
                 return;
             }
-
+            /*
             var semCredits = document.getElementById(sem+'credits').innerHTML;
             var classInfos = document.getElementById(classcode+'-info').value.split(',');
             if((parseInt(semCredits) + parseInt(classInfos[0])) > 18){
                 alert("Cannot add. It would put the semester over 18 credits.");
                 return;
             }
+            */
             addClass(classcode, sem);
         }
     </script>

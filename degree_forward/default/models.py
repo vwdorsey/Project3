@@ -55,3 +55,4 @@ class UserSemester(models.Model):
     Number = models.IntegerField(null=True)
     Term = models.CharField(max_length=2, choices=TERM_CHOICES)
     Classes = models.TextField(null=True)
+    Credits = models.IntegerField(default=0)

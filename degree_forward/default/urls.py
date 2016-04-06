@@ -7,5 +7,6 @@ urlpatterns = [
     url(r'^login/', views.auth, name='login'),
     url(r'^landing/', views.landing, name='landing'),
     url(r'^newPlan/', views.makeNewDegree, name='newPlan'),
-    url(r'^existingPlan/', views.loadPrevDegree, name='existingPlan')
+    url(r'^existingPlan/', views.loadPrevDegree, name='existingPlan'),
+    url(r'^addClass/', views.addClass, name='addclass')
 ]

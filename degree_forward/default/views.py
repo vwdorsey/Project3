@@ -207,6 +207,55 @@ def expandDegree(useplan, request):
 
     return render(request, 'plan.html', context)
 
+def addClass(request):
+    planID = request.POST.get("post","")
+    semester = request.POST.get("semester","")
+    classcode = request.POST.get("classcode","")
+    plan = UserDegreePlan.objects.get(pk=planID)
+    requestedclass = ClassListing.objects.get(code=classcode)
+    destSemester = UserSemester.objects.get(pk=semester)
+    status = 'OK'
+
+    if destSemester.Credits == 21 or (destSemester.Credits + requestedclass.credits > 21):
+        status = 'WARN-CROB'
+
+    if requestedclass.prereqs is not None or requestedclass.coreqs is not None:
+        sems = plan.Semesters.split(';')
+        prereqs = ""
+        coreqs = ""
+        classCoReqs = requestedclass.prereqs.split(';')
+        classPreReqs = requestedclass.coreqs.split(';')
+        for i in range(0,destSemester):
+            sem = UserSemester.objects.get(pk=sems[int(i)])
+            if i <= destSemester-2:
+                prereqs = sem.Classes
+            if i <= destSemester-1:
+                coreqs = sem.Classes
+
+        for cc in classCoReqs:
+            if cc not in coreqs:
+                status = 'FAIL-COREQ-'+cc
+                return status
+
+        for cc in classPreReqs:
+            if cc not in prereqs:
+                status = 'FAIL-PREREQ-'+cc
+                return status
+
+    destSemester.Classes += requestedclass.code + ';'
+    destSemester.Credits += int(requestedclass.credits)
+    destSemester.save()
+    return HttpResponse(status)
+
+def removeClass(request):
+    semester = request.POST.get("semester", "")
+    classcode = request.POST.get("classcode", "")
+    requestedclass = ClassListing.objects.get(code=classcode)
+    destSemester = UserSemester.objects.get(pk=semester)
+    status = 'OK'
+
+
+
 #def saveSemChanges(request):
 
 #def saveSemOrder(request):
