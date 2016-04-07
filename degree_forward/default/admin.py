@@ -16,3 +16,11 @@ class SemesterAdmin(admin.ModelAdmin):
 @admin.register(ClassListing)
 class ClassAdmin(admin.ModelAdmin):
     list_display = ['name', 'code', 'credits', 'term', 'prereqs', 'coreqs', 'satisfies']
+
+@admin.register(UserSemester)
+class SemAdmin(admin.ModelAdmin):
+    list_display = ['pk']
+
+@admin.register(UserDegreePlan)
+class DegPlan(admin.ModelAdmin):
+    list_display = ['pk', 'Major', 'LinkedUser']

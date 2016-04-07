@@ -11,8 +11,8 @@
 <body style="min-height: 100%">
     <div class="container-fluid col-xs-9" style="background-color: lightgrey; padding-top: 20px; padding-bottom: 20px; min-height: 100%">
         <div class="container-fluid" style="margin-bottom:20px">
-            {{ plan }} - {{ credits }} credits
-            <input type="hidden" id="planID" value="{{ useplan.id }}">
+            {{ plan.Major }} - {{ credits }} credits
+            <input type="hidden" id="planID" value="{{ plan.id }}">
         </div>
         <div class="container-fluid">
             {% for list in classList %}
@@ -36,7 +36,7 @@
         </div>
     </div>
     <div class="container-fluid col-xs-3 fill" style="background-color: lightsteelblue; padding-top: 30px; min-height: 100%">
-        <button onclick="window.location = '/landing/" class="btn">Return to Landing</button>
+        <button onclick="returnToLanding()" class="btn">Return to Landing</button>
         <br>
         <div class="container-fluid" style="margin-bottom: 30px;">
             Add Class:
@@ -69,6 +69,10 @@
 
     <script>
         loadCatDropdown();
+
+        function returnToLanding(){
+            window.location='/landing/';
+        }
 
         function edit(classcode, semester){
             var x = window.prompt("Please Type the command you wish to perform (Choices are Move/Complete/Incomplete/Delete)").trim();
@@ -199,52 +203,26 @@
                 changeCredits(cc, 1);
         }
 
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
         function addClass(prompt, dest) {
             if (prompt != null) {
-                /*
-                var cc = prompt.toUpperCase();
-                var info = document.getElementById(cc + '-info').value;
-                if (document.getElementById(cc) == null) {
-                    if (info.indexOf(',') > -1) {
-                        var infos = info.split(',');
-                        var prereqs = infos[1].split(';');
-                        if (prereqs[0] != 'NONE') {
-                            for (var i = 0; i < prereqs.length; i++) {
-                                var pr = prereqs[i].toUpperCase();
-                                var prsem = document.getElementById(pr + '-sem').value()
-                                if (dest <= prsem) {
-                                    alert("Unable to add class due to dependency problems. You must have " + pr + " before you can take " + cc);
-                                    return;
-                                }
-                            }
-                        }
-                        if(document.getElementById("completed").innerHTML.indexOf(prompt) > -1){
-                            var searchString = '<p>'+cc + ' ' + infos[0] + ' cr</p>';
-                            var html = document.getElementById("completed").innerHTML;
-                            var html2 = html.replace(searchString,"");
-                            document.getElementById("completed").innerHTML = html2;
-                        }
-                        var writestring = '<div class="container col-xs-1 '+dest+'class" style="margin-top: 10px; margin-bottom: 10px; margin-right: 30px;" id="' + cc + '">' +
-                                '<button class="container-fluid" style="outline: 1px solid black; margin-right:5px; width: 65px" onclick="edit(\'' + cc + '\')" id="' + cc + 'inner">' +
-                                cc + ' ' + infos[0] + ' cr' +
-                                '<input type="hidden" id="' + cc + '-sem" value="' + dest + '">' +
-                                '<input type="hidden" id="' + cc + '-prereqs" value="' + infos[1] + '">' +
-                                '</button>' +
-                                '</div>';
-                        document.getElementById(dest).innerHTML += writestring;
-                        changeCredits(cc, 1);
-                    }
-                    else {
-                        alert("That class is not available");
-                        return;
-                    }
-                }
-                else {
-                    alert("Course is already present");
-                    return;
-                }
-                */
-                $.post( "/addClass/", { post: null, semester: dest, classcode: prompt, csrf-token:{% csrf_token %}} }, function(data){
+                var id = {{ plan.id }};
+                $.post( "/addClass/", { plan: id, semester: dest, classcode: prompt, csrfmiddlewaretoken:getCookie('csrftoken') }).success(function(data){
                     if(data.indexOf("FAIL-COREQ") > -1) {
                         cc = data.substring(data.lastIndexOf('-')+1, data.length);
                         alert("Unable to add "+prompt+". Coreq "+cc+" is not satisfied.");
@@ -253,13 +231,18 @@
                         cc = data.substring(data.lastIndexOf('-')+1, data.length);
                         alert("Unable to add "+prompt+". Prereq "+cc+" is not satisfied.");
                     }
+                    else if(data.indexOf("WARN-CROB") > -1){
+                        alert("WARN: Destination is over 21 credits.");
+                        $.post("/existingPlan/", { plan:id, csrfmiddlewaretoken:getCookie('csrftoken') });
+                    }
                     else {
-                        if(data.indexOf("WARN-CROB")) alert("WARN: Destination is over 21 credits.");
+                        alert("Add Successful");
+                        $.post("/existingPlan/", { plan:id, csrfmiddlewaretoken:getCookie('csrftoken') }, function(data){
+                            document.close();
+                            document.write(data);
+                        });
                     }
                 });
-            }
-            else {
-                return;
             }
         }
 
@@ -303,8 +286,8 @@
             var selectString = 'Semester: <select id="addSem">';
             selectString += '<option value=""> --- </option>';
             if(document.getElementById("addcodediv").value == "") return;
-            for(var i = 1; i < 9; i++) {
-                selectString += '<option value=' + i + '>' + i + '</option>';
+            for(var i = 0; i < {{ semids }}; i++) {
+                selectString += '<option value=' + i + '>' + increment(i) + '</option>';
             }
 
             selectString += '</select><br><button onclick="addClassDropdowns()">Add Class</button> ';
@@ -315,18 +298,24 @@
             document.getElementById("addsemdiv").innerHTML += selectString;
         }
 
-        function addClassDropdowns(){
+        function increment(string){
+            var n = parseInt(string);
+            n++;
+            return n;
+        }
+
+        function addClassDropdowns() {
             var classcode = document.getElementById("addCode").value;
-            if(classcode == "") {
+            if (classcode == "") {
                 alert("Please Select a Class");
                 return;
             }
             var sem = document.getElementById("addSem").value;
-            if(classcode == "") {
+            if (classcode == "") {
                 alert("Please Select a Semester");
                 return;
             }
-            /*
+             /*
             var semCredits = document.getElementById(sem+'credits').innerHTML;
             var classInfos = document.getElementById(classcode+'-info').value.split(',');
             if((parseInt(semCredits) + parseInt(classInfos[0])) > 18){

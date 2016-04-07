@@ -139,10 +139,11 @@ def makeNewDegree(request):
 
 def loadPrevDegree(request):
     requestedplan = request.POST.get("plan", "")
-    if requestedplan == 'No Degrees Available':
+    if requestedplan == 'No Degrees Available' or requestedplan == '':
         error = 'You have no degrees available to select.'
         context = {error}
         return render(request, 'landing.html', context)
+
     planNum = int(requestedplan)
     useplan = UserDegreePlan.objects.get(pk=planNum)
     if useplan.LinkedUser == request.user:
@@ -176,6 +177,7 @@ def expandDegree(useplan, request):
     semesters = []
     semIdString = useplan.Semesters
     semIds = semIdString.split(';')
+    numSemIds = len(semIds)-1
     for i in semIds:
         if i != '':
             semesters.append(UserSemester.objects.get(id=int(i)))
@@ -196,6 +198,7 @@ def expandDegree(useplan, request):
         semCredits.append(scredits)
 
     context = {
+        'semids': numSemIds,
         'categories': categories,
         'classString': ClassString,
         'allclasses': classes,
@@ -207,13 +210,16 @@ def expandDegree(useplan, request):
 
     return render(request, 'plan.html', context)
 
+
 def addClass(request):
-    planID = request.POST.get("post","")
+    planID = request.POST.get("plan","")
     semester = request.POST.get("semester","")
     classcode = request.POST.get("classcode","")
     plan = UserDegreePlan.objects.get(pk=planID)
+    semIdString = plan.Semesters
+    semIds = semIdString.split(';')
     requestedclass = ClassListing.objects.get(code=classcode)
-    destSemester = UserSemester.objects.get(pk=semester)
+    destSemester = UserSemester.objects.get(pk=semIds[int(semester)])
     status = 'OK'
 
     if destSemester.Credits == 21 or (destSemester.Credits + requestedclass.credits > 21):
@@ -225,34 +231,101 @@ def addClass(request):
         coreqs = ""
         classCoReqs = requestedclass.prereqs.split(';')
         classPreReqs = requestedclass.coreqs.split(';')
-        for i in range(0,destSemester):
+        for i in range(0,destSemester.Number):
             sem = UserSemester.objects.get(pk=sems[int(i)])
-            if i <= destSemester-2:
-                prereqs = sem.Classes
-            if i <= destSemester-1:
-                coreqs = sem.Classes
+            if i <= destSemester.Number-2:
+                prereqs += sem.Classes
+            if i <= destSemester.Number-1:
+                coreqs += sem.Classes
 
         for cc in classCoReqs:
-            if cc not in coreqs:
+            if cc not in coreqs and cc != 'NONE':
+                print(cc)
                 status = 'FAIL-COREQ-'+cc
-                return status
+                return HttpResponse(status)
 
         for cc in classPreReqs:
-            if cc not in prereqs:
+            if cc not in prereqs and cc != 'NONE':
                 status = 'FAIL-PREREQ-'+cc
-                return status
+                return HttpResponse(status)
 
-    destSemester.Classes += requestedclass.code + ';'
-    destSemester.Credits += int(requestedclass.credits)
+    classString = destSemester.Classes
+    semCredits = destSemester.Credits
+    print(destSemester.pk)
+    if classString == 'NONE':
+        classString = requestedclass.code + ';'
+    else:
+        classString += requestedclass.code + ';'
+
+    semCredits += requestedclass.credits
+
+    destSemester.Classes = classString
+    destSemester.Credits = semCredits
     destSemester.save()
     return HttpResponse(status)
 
+def findPrereqs(classcode):
+    prereqs = []
+    classlist = ClassListing.objects.exclude(prereqs='NONE')
+    for 
+
+
+def findCoreqs(classcode):
+
+
+
 def removeClass(request):
+    planID = request.POST.get("plan", "")
     semester = request.POST.get("semester", "")
     classcode = request.POST.get("classcode", "")
+    plan = UserDegreePlan.objects.get(pk=planID)
+    semIdString = plan.Semesters
+    semIds = semIdString.split(';')
     requestedclass = ClassListing.objects.get(code=classcode)
-    destSemester = UserSemester.objects.get(pk=semester)
+    destSemester = UserSemester.objects.get(pk=semIds[int(semester)])
     status = 'OK'
+
+    if destSemester.Credits == 0 or (destSemester.Credits + requestedclass.credits > 21):
+        status = 'WARN-RMSM'
+
+    if requestedclass.prereqs is not None or requestedclass.coreqs is not None:
+        sems = plan.Semesters.split(';')
+        prereqs = ""
+        coreqs = ""
+        classCoReqs = requestedclass.prereqs.split(';')
+        classPreReqs = requestedclass.coreqs.split(';')
+        for i in range(0, destSemester.Number):
+            sem = UserSemester.objects.get(pk=sems[int(i)])
+            if i <= destSemester.Number - 2:
+                prereqs += sem.Classes
+            if i <= destSemester.Number - 1:
+                coreqs += sem.Classes
+
+        for cc in classCoReqs:
+            if cc not in coreqs and cc != 'NONE':
+                print(cc)
+                status = 'FAIL-COREQ-' + cc
+                return HttpResponse(status)
+
+        for cc in classPreReqs:
+            if cc not in prereqs and cc != 'NONE':
+                status = 'FAIL-PREREQ-' + cc
+                return HttpResponse(status)
+
+    classString = destSemester.Classes
+    semCredits = destSemester.Credits
+    print(destSemester.pk)
+    if classString == 'NONE':
+        classString = requestedclass.code + ';'
+    else:
+        classString += requestedclass.code + ';'
+
+    semCredits += requestedclass.credits
+
+    destSemester.Classes = classString
+    destSemester.Credits = semCredits
+    destSemester.save()
+    return HttpResponse(status)
 
 
 
