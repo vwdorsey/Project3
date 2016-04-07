@@ -251,7 +251,6 @@ def addClass(request):
 
     classString = destSemester.Classes
     semCredits = destSemester.Credits
-    print(destSemester.pk)
     if classString == 'NONE':
         classString = requestedclass.code + ';'
     else:
@@ -267,11 +266,19 @@ def addClass(request):
 def findPrereqs(classcode):
     prereqs = []
     classlist = ClassListing.objects.exclude(prereqs='NONE')
-    for 
+    for c in classlist:
+        if classcode in c.prereqs:
+            prereqs.append(c.code)
+    return prereqs
 
 
 def findCoreqs(classcode):
-
+    coreqs = []
+    classlist = ClassListing.objects.exclude(coreqs='NONE')
+    for c in classlist:
+        if classcode in c.coreqs:
+            coreqs.append(c.code)
+    return coreqs
 
 
 def removeClass(request):
@@ -294,11 +301,11 @@ def removeClass(request):
         coreqs = ""
         classCoReqs = requestedclass.prereqs.split(';')
         classPreReqs = requestedclass.coreqs.split(';')
-        for i in range(0, destSemester.Number):
+        for i in range(destSemester.Number, len(sems)-1):
             sem = UserSemester.objects.get(pk=sems[int(i)])
-            if i <= destSemester.Number - 2:
+            if i >= destSemester.Number+1:
                 prereqs += sem.Classes
-            if i <= destSemester.Number - 1:
+            if i >= destSemester.Number:
                 coreqs += sem.Classes
 
         for cc in classCoReqs:
@@ -314,13 +321,9 @@ def removeClass(request):
 
     classString = destSemester.Classes
     semCredits = destSemester.Credits
-    print(destSemester.pk)
-    if classString == 'NONE':
-        classString = requestedclass.code + ';'
-    else:
-        classString += requestedclass.code + ';'
+    classString = classString.replace(requestedclass+';','')
 
-    semCredits += requestedclass.credits
+    semCredits -= requestedclass.credits
 
     destSemester.Classes = classString
     destSemester.Credits = semCredits
